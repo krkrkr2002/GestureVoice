@@ -8,6 +8,7 @@ const DetectPage = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const inFlightRef = useRef(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -119,16 +120,14 @@ const DetectPage = () => {
     }
 
     let isMounted = true;
-    let skipNext = false;
 
     const captureAndPredict = async () => {
       // Skip if already loading or component unmounted
-      if (!isMounted || loading || skipNext) {
-        skipNext = false;
+      if (!isMounted || inFlightRef.current) {
         return;
       }
 
-      skipNext = true;
+      inFlightRef.current = true;
       setLoading(true);
       setError('');
       
@@ -137,7 +136,7 @@ const DetectPage = () => {
         const canvas = canvasRef.current;
 
         if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
-          skipNext = false;
+          inFlightRef.current = false;
           setLoading(false);
           return;
         }
@@ -180,7 +179,7 @@ const DetectPage = () => {
       } finally {
         if (isMounted) {
           setLoading(false);
-          skipNext = false;
+          inFlightRef.current = false;
         }
       }
     };
@@ -195,12 +194,13 @@ const DetectPage = () => {
 
     return () => {
       isMounted = false;
+      inFlightRef.current = false;
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };
-  }, [isDetecting, isCameraReady, loading]);
+  }, [isDetecting, isCameraReady]);
 
   const toggleDetection = () => {
     setIsDetecting(!isDetecting);
