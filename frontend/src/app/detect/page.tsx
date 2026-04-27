@@ -99,7 +99,7 @@ const DetectPage = () => {
         const error = e as Error;
         const errorMsg = error?.message || 'Unknown error';
         if (errorMsg.includes('fetch') || errorMsg.includes('Failed to fetch')) {
-          setError('⚠️ Backend server not running! Please start the backend server on http://localhost:8000');
+          setError('⚠️ Cannot reach backend API. Check Vercel env NEXT_PUBLIC_API_URL and backend status.');
         } else {
           setError('Failed to connect to backend: ' + errorMsg);
         }
@@ -157,7 +157,7 @@ const DetectPage = () => {
           setError(res.error);
           // Check if it's a backend connection error
           if (res.error.includes('fetch') || res.error.includes('network') || res.error.includes('Failed to fetch')) {
-            setError('Cannot connect to backend. Make sure the backend server is running on http://localhost:8000');
+            setError('Cannot connect to backend API. Verify NEXT_PUBLIC_API_URL is set correctly.');
           }
         } else {
           const newPrediction = res.prediction || '';
@@ -173,7 +173,7 @@ const DetectPage = () => {
         const error = e as Error;
         const errorMsg = error?.message || 'Prediction failed';
         if (errorMsg.includes('fetch') || errorMsg.includes('NetworkError') || errorMsg.includes('Failed to fetch')) {
-          setError('Backend server not reachable. Please ensure backend server is running on http://localhost:8000');
+          setError('Backend API not reachable. Verify NEXT_PUBLIC_API_URL in Vercel settings.');
         } else {
           setError(errorMsg);
         }
