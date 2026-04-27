@@ -1,0 +1,27 @@
+# Core Web Framework
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+
+# Machine Learning & Computer Vision
+tensorflow-cpu==2.17.1
+keras==3.4.1
+mediapipe
+
+# OpenCV
+opencv-python==4.10.0.84
+opencv-contrib-python==4.10.0.84
+
+# Data
+numpy<2
+pandas
+Pillow
+h5py
+
+# Utilities
+protobuf<5
+requests
+
+# Offline Text-to-Speech (no credits needed)
+pyttsx3
