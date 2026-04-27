@@ -5,8 +5,18 @@ import { predictFromBase64Image, fetchModelInfo } from '@/lib/api';
 import Card from '@/components/Card';
 
 const DetectPage = () => {
+  const HAND_CONNECTIONS: [number, number][] = [
+    [0, 1], [1, 2], [2, 3], [3, 4],
+    [0, 5], [5, 6], [6, 7], [7, 8],
+    [5, 9], [9, 10], [10, 11], [11, 12],
+    [9, 13], [13, 14], [14, 15], [15, 16],
+    [13, 17], [17, 18], [18, 19], [19, 20],
+    [0, 17],
+  ];
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const inFlightRef = useRef(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
@@ -29,6 +39,40 @@ const DetectPage = () => {
       utterance.pitch = 1;
       utterance.volume = 1;
       window.speechSynthesis.speak(utterance);
+    }
+  }, []);
+
+  const drawLandmarks = useCallback((landmarks: number[][] = []) => {
+    const video = videoRef.current;
+    const overlay = overlayRef.current;
+    if (!video || !overlay) return;
+
+    overlay.width = video.videoWidth || overlay.clientWidth;
+    overlay.height = video.videoHeight || overlay.clientHeight;
+    const ctx = overlay.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    if (!landmarks.length) return;
+
+    // Draw connection lines first, then points.
+    ctx.strokeStyle = '#00E5FF';
+    ctx.lineWidth = 2;
+    for (const [start, end] of HAND_CONNECTIONS) {
+      const p1 = landmarks[start];
+      const p2 = landmarks[end];
+      if (!p1 || !p2) continue;
+      ctx.beginPath();
+      ctx.moveTo(p1[0], p1[1]);
+      ctx.lineTo(p2[0], p2[1]);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#00FF88';
+    for (const point of landmarks) {
+      ctx.beginPath();
+      ctx.arc(point[0], point[1], 4, 0, Math.PI * 2);
+      ctx.fill();
     }
   }, []);
 
@@ -166,6 +210,7 @@ const DetectPage = () => {
           setPrediction(newPrediction);
           setConfidence(newConfidence);
           setCategory(newCategory);
+          drawLandmarks(res.landmarks || []);
         }
       } catch (e) {
         if (!isMounted) return;
@@ -176,6 +221,7 @@ const DetectPage = () => {
         } else {
           setError(errorMsg);
         }
+        drawLandmarks([]);
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -195,12 +241,13 @@ const DetectPage = () => {
     return () => {
       isMounted = false;
       inFlightRef.current = false;
+      drawLandmarks([]);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };
-  }, [isDetecting, isCameraReady]);
+  }, [isDetecting, isCameraReady, drawLandmarks]);
 
   const toggleDetection = () => {
     setIsDetecting(!isDetecting);
@@ -234,6 +281,11 @@ const DetectPage = () => {
                 playsInline 
                 muted 
                 autoPlay
+              />
+              <canvas
+                ref={overlayRef}
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                style={{ display: isCameraReady ? 'block' : 'none', minHeight: '400px' }}
               />
               {!isCameraReady && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">

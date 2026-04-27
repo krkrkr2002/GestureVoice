@@ -5,7 +5,7 @@ type PredictResponse = {
   prediction?: string;
   confidence?: number;
   category?: string;
-  landmarks?: number[];
+  landmarks?: number[][];
   error?: string;
 };
 

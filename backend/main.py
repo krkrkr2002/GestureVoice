@@ -59,6 +59,7 @@ class PredictionResponse(BaseModel):
     prediction: str
     confidence: float
     category: str
+    landmarks: list[list[int]] = []
 
 
 class ModelInfo(BaseModel):
@@ -139,7 +140,8 @@ async def predict_sign(request: PredictionRequest):
             return PredictionResponse(
                 prediction="No hand detected",
                 confidence=0.0,
-                category="none"
+                category="none",
+                landmarks=[]
             )
 
         # ✅ FIX 2 (safe landmark handling)
@@ -149,7 +151,8 @@ async def predict_sign(request: PredictionRequest):
             return PredictionResponse(
                 prediction="Invalid hand data",
                 confidence=0.0,
-                category="none"
+                category="none",
+                landmarks=[]
             )
 
         landmark_list = calc_landmark_list(image, hand_landmarks)
@@ -168,7 +171,8 @@ async def predict_sign(request: PredictionRequest):
         return PredictionResponse(
             prediction=label,
             confidence=confidence,
-            category=category
+            category=category,
+            landmarks=landmark_list
         )
 
     except Exception as e:
